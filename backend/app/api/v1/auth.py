@@ -215,21 +215,34 @@ async def get_current_user_info(
     返回當前用戶的完整資料 (不包含敏感資訊)
     """
     try:
-        # 直接返回用戶資料 (依賴注入已經處理認證)
+        # 修復：正確處理用戶資料轉換
         user_dict = current_user.to_dict(include_sensitive=False)
         
-        return UserResponse(**user_dict)
+        # 確保 ObjectId 正確轉換為字串
+        if "_id" in user_dict:
+            user_dict["id"] = str(user_dict["_id"])
+            del user_dict["_id"]
+        
+        # 如果沒有 id 欄位，使用 current_user.id
+        if "id" not in user_dict and hasattr(current_user, 'id'):
+            user_dict["id"] = current_user.id
+        
+        return user_dict  # 直接返回字典，讓 FastAPI 自動轉換
         
     except Exception as e:
+        # 添加更詳細的錯誤日誌
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Get user info error: {str(e)}, user_data: {current_user}")
+        
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
                 "success": False,
-                "message": "取得用戶資料失敗",
+                "message": f"取得用戶資料失敗: {str(e)}",
                 "error_code": "GET_USER_INFO_ERROR"
             }
         )
-
 
 @router.post(
     "/refresh",

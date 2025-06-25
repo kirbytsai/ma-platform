@@ -395,15 +395,42 @@ class User(BaseModel):
         
         return completeness
     
-    # 輸出方法
+    # 修復 backend/app/models/user.py 中的 to_dict 方法
+
     def to_dict(self, include_sensitive: bool = False) -> dict:
         """轉換為字典，可選擇是否包含敏感資料"""
-        data = self.model_dump(by_alias=True, exclude_unset=True)
+        # 使用 Pydantic 的 model_dump 方法
+        data = self.model_dump(by_alias=True, exclude_unset=False)
         
+        # 處理 ObjectId 轉換
+        if "_id" in data:
+            data["id"] = str(data["_id"])
+            del data["_id"]
+        elif "id" in data and data["id"]:
+            data["id"] = str(data["id"])
+        
+        # 移除敏感資料
         if not include_sensitive:
             data.pop('password_hash', None)
         
-        return data
+        # 確保必要欄位存在
+        required_fields = {
+            'email': self.email,
+            'role': self.role,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'phone': self.phone,
+            'is_active': self.is_active,
+            'created_at': self.created_at,
+            'updated_at': self.updated_at
+        }
+        
+        # 補充缺失的必要欄位
+        for field, value in required_fields.items():
+            if field not in data:
+                data[field] = value
+        
+        return data 
     
     def to_public_dict(self) -> dict:
         """輸出公開資料 (用於買方列表等場景)"""

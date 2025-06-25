@@ -143,7 +143,9 @@ class UserService:
         try:
             user_data = await collection.find_one({"_id": ObjectId(user_id)})
             if user_data:
+                # 修復：確保正確轉換 ObjectId
                 user_data["id"] = str(user_data["_id"])
+                del user_data["_id"]  # 移除原始的 _id
                 return User(**user_data)
             return None
             
@@ -152,7 +154,7 @@ class UserService:
                 message=f"查詢用戶失敗: {str(e)}",
                 error_code="USER_QUERY_ERROR"
             )
-    
+        
     async def get_user_by_email(self, email: str) -> Optional[User]:
         """根據 email 查詢用戶"""
         collection = await self._get_collection()
@@ -160,7 +162,9 @@ class UserService:
         try:
             user_data = await collection.find_one({"email": email})
             if user_data:
+                # 修復：確保正確轉換 ObjectId
                 user_data["id"] = str(user_data["_id"])
+                del user_data["_id"]  # 移除原始的 _id
                 return User(**user_data)
             return None
             
@@ -169,7 +173,7 @@ class UserService:
                 message=f"查詢用戶失敗: {str(e)}",
                 error_code="USER_QUERY_ERROR"
             )
-    
+        
     async def get_users_by_role(
         self, 
         role: UserRole,

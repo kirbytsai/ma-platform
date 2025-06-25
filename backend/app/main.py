@@ -12,7 +12,7 @@ import time
 import logging
 
 from app.core.config import settings
-from app.core.database import connect_to_mongo, close_mongo_connection
+from app.core.database import Database  # 修復：使用正確的類別匯入
 from app.core.exceptions import BusinessException, ValidationException, PermissionDeniedException
 from app.api.v1.auth import router as auth_router
 
@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 啟動 M&A 平台後端服務...")
     
     # 連接資料庫
-    await connect_to_mongo()
+    await Database.connect()  # 修復：使用正確的方法名稱
     logger.info("✅ 資料庫連接成功")
     
     yield
@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
     logger.info("🔒 關閉 M&A 平台後端服務...")
     
     # 關閉資料庫連接
-    await close_mongo_connection()
+    await Database.disconnect()  # 修復：使用正確的方法名稱
     logger.info("✅ 資料庫連接已關閉")
 
 
@@ -212,19 +212,28 @@ async def root():
 async def health_check():
     """健康檢查端點"""
     try:
-        from app.core.database import get_database
-        
         # 檢查資料庫連接
-        db = await get_database()
-        await db.command("ping")
+        health_status = await Database.health_check()  # 修復：使用正確的方法
         
-        return {
-            "status": "healthy",
-            "service": "M&A Platform API",
-            "version": "1.0.0",
-            "database": "connected",
-            "timestamp": time.time()
-        }
+        if health_status:
+            return {
+                "status": "healthy",
+                "service": "M&A Platform API",
+                "version": "1.0.0",
+                "database": "connected",
+                "timestamp": time.time()
+            }
+        else:
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "status": "unhealthy",
+                    "service": "M&A Platform API",
+                    "version": "1.0.0",
+                    "database": "disconnected",
+                    "timestamp": time.time()
+                }
+            )
         
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
@@ -286,12 +295,11 @@ app.include_router(
 async def test_database():
     """資料庫連接測試端點"""
     try:
-        from app.core.database import get_database
-        
-        db = await get_database()
+        # 檢查資料庫連接
+        db = Database.get_database()  # 修復：使用正確的方法
         
         # 測試基本操作
-        result = await db.command("ping")
+        await db.command("ping")
         
         # 測試集合操作
         collections = await db.list_collection_names()
@@ -303,7 +311,6 @@ async def test_database():
             "success": True,
             "message": "資料庫連接正常",
             "database_name": db.name,
-            "ping_result": result,
             "collections": collections,
             "user_count": user_count,
             "timestamp": time.time()

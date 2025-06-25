@@ -10,6 +10,7 @@ pymongo==4.6.0
 # 資料驗證
 pydantic==2.5.0
 pydantic-settings==2.1.0
+email-validator==2.1.0
 
 # 認證和安全
 python-jose[cryptography]==3.3.0
