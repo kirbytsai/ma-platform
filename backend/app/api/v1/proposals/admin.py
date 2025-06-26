@@ -9,7 +9,7 @@ from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, Body, status
 from fastapi.responses import JSONResponse
 
-from app.core.exceptions import BusinessException, ValidationException, PermissionException
+from app.core.exceptions import BusinessException, ValidationException, PermissionDeniedException
 from app.schemas.proposal import ProposalApproveRequest, ProposalRejectRequest
 from app.services.proposal import ProposalService
 from app.api.deps import get_current_user, require_admin
@@ -66,7 +66,7 @@ async def approve_proposal(
             }
         )
         
-    except (PermissionException, ValidationException) as e:
+    except (PermissionDeniedException, ValidationException) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except BusinessException as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -120,7 +120,7 @@ async def reject_proposal(
             }
         )
         
-    except (PermissionException, ValidationException) as e:
+    except (PermissionDeniedException, ValidationException) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except BusinessException as e:
         raise HTTPException(status_code=422, detail=str(e))

@@ -8,7 +8,7 @@ from typing import Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Body, status
 from fastapi.responses import JSONResponse
 
-from app.core.exceptions import BusinessException, ValidationException, PermissionException
+from app.core.exceptions import BusinessException, ValidationException, PermissionDeniedException
 from app.models.proposal import ProposalStatus
 from app.schemas.proposal import ProposalSubmitRequest
 from app.services.proposal import ProposalService
@@ -63,7 +63,7 @@ async def submit_proposal(
             }
         )
         
-    except (PermissionException, ValidationException) as e:
+    except (PermissionDeniedException, ValidationException) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except BusinessException as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -113,7 +113,7 @@ async def withdraw_proposal(
             }
         )
         
-    except (PermissionException, ValidationException) as e:
+    except (PermissionDeniedException, ValidationException) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except BusinessException as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -160,7 +160,7 @@ async def publish_proposal(
             }
         )
         
-    except (PermissionException, ValidationException) as e:
+    except (PermissionDeniedException, ValidationException) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except BusinessException as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -209,7 +209,7 @@ async def archive_proposal(
             }
         )
         
-    except (PermissionException, ValidationException) as e:
+    except (PermissionDeniedException, ValidationException) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except BusinessException as e:
         raise HTTPException(status_code=422, detail=str(e))

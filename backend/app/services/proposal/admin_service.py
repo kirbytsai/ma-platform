@@ -9,7 +9,7 @@ from typing import Optional, Dict, Any, List
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorCollection
 
-from app.core.exceptions import BusinessException, PermissionException, ValidationException
+from app.core.exceptions import BusinessException, PermissionDeniedException, ValidationException
 from app.models.proposal import Proposal, ProposalStatus, ReviewRecord
 from app.schemas.proposal import ProposalApproveRequest, ProposalRejectRequest
 
@@ -50,7 +50,7 @@ class ProposalAdminService:
             bool: 審核是否成功
             
         Raises:
-            PermissionException: 非管理員權限
+            PermissionDeniedException: 非管理員權限
             BusinessException: 提案狀態不允許審核
         """
         try:
@@ -104,7 +104,7 @@ class ProposalAdminService:
             return success
             
         except Exception as e:
-            if isinstance(e, (BusinessException, PermissionException)):
+            if isinstance(e, (BusinessException, PermissionDeniedException)):
                 raise
             raise BusinessException(
                 message=f"審核提案時發生錯誤: {str(e)}",
@@ -182,7 +182,7 @@ class ProposalAdminService:
             return success
             
         except Exception as e:
-            if isinstance(e, (BusinessException, PermissionException, ValidationException)):
+            if isinstance(e, (BusinessException, PermissionDeniedException, ValidationException)):
                 raise
             raise BusinessException(
                 message=f"拒絕提案時發生錯誤: {str(e)}",

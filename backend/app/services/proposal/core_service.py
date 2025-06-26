@@ -10,7 +10,7 @@ from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorCollection, AsyncIOMotorDatabase
 
 from app.core.database import Database
-from app.core.exceptions import BusinessException, PermissionException
+from app.core.exceptions import BusinessException, PermissionDeniedException
 from app.models.proposal import (
     Proposal, ProposalStatus, CompanyInfo, FinancialInfo, 
     BusinessModel, TeaserContent, FullContent
@@ -66,7 +66,7 @@ class ProposalCoreService:
             Proposal: 創建的提案實例
             
         Raises:
-            PermissionException: 創建者權限不足
+            PermissionDeniedException: 創建者權限不足
             BusinessException: 創建失敗
         """
         try:
@@ -104,7 +104,7 @@ class ProposalCoreService:
             return proposal
             
         except Exception as e:
-            if isinstance(e, (BusinessException, PermissionException)):
+            if isinstance(e, (BusinessException, PermissionDeniedException)):
                 raise
             raise BusinessException(
                 message=f"創建提案時發生錯誤: {str(e)}",
@@ -168,7 +168,7 @@ class ProposalCoreService:
             Optional[Proposal]: 可編輯的提案實例或 None
             
         Raises:
-            PermissionException: 無編輯權限
+            PermissionDeniedException: 無編輯權限
         """
         proposal = await self.get_proposal_by_id(proposal_id)
         if not proposal:
@@ -181,7 +181,7 @@ class ProposalCoreService:
             user = await user_collection.find_one({"_id": ObjectId(user_id)})
             
             if not user or user.get("role") != UserRole.ADMIN:
-                raise PermissionException(
+                raise PermissionDeniedException(
                     message="無權限編輯此提案",
                     error_code="PROPOSAL_EDIT_NO_PERMISSION"
                 )
@@ -207,7 +207,7 @@ class ProposalCoreService:
             
         Raises:
             BusinessException: 提案不存在或無法編輯
-            PermissionException: 無編輯權限
+            PermissionDeniedException: 無編輯權限
         """
         try:
             # 驗證提案存在且用戶有權限
@@ -254,7 +254,7 @@ class ProposalCoreService:
             return result.modified_count > 0
             
         except Exception as e:
-            if isinstance(e, (BusinessException, PermissionException)):
+            if isinstance(e, (BusinessException, PermissionDeniedException)):
                 raise
             raise BusinessException(
                 message=f"更新提案時發生錯誤: {str(e)}",
@@ -308,7 +308,7 @@ class ProposalCoreService:
             return result.modified_count > 0
             
         except Exception as e:
-            if isinstance(e, (BusinessException, PermissionException)):
+            if isinstance(e, (BusinessException, PermissionDeniedException)):
                 raise
             raise BusinessException(
                 message=f"刪除提案時發生錯誤: {str(e)}",
@@ -373,7 +373,7 @@ class ProposalCoreService:
             return result.modified_count > 0
             
         except Exception as e:
-            if isinstance(e, (BusinessException, PermissionException)):
+            if isinstance(e, (BusinessException, PermissionDeniedException)):
                 raise
             raise BusinessException(
                 message=f"添加檔案時發生錯誤: {str(e)}",
@@ -426,7 +426,7 @@ class ProposalCoreService:
             return result.modified_count > 0
             
         except Exception as e:
-            if isinstance(e, (BusinessException, PermissionException)):
+            if isinstance(e, (BusinessException, PermissionDeniedException)):
                 raise
             raise BusinessException(
                 message=f"移除檔案時發生錯誤: {str(e)}",
@@ -506,28 +506,28 @@ class ProposalCoreService:
             user_id: 用戶 ID
             
         Raises:
-            PermissionException: 權限不足
+            PermissionDeniedException: 權限不足
         """
         try:
             user_collection = await self._get_user_collection()
             user = await user_collection.find_one({"_id": ObjectId(user_id)})
             
             if not user:
-                raise PermissionException(
+                raise PermissionDeniedException(
                     message="用戶不存在",
                     error_code="USER_NOT_FOUND"
                 )
             
             if user.get("role") not in [UserRole.SELLER, UserRole.ADMIN]:
-                raise PermissionException(
+                raise PermissionDeniedException(
                     message="只有提案方和管理員可以創建提案",
                     error_code="PROPOSAL_CREATE_NO_PERMISSION"
                 )
                 
         except Exception as e:
-            if isinstance(e, PermissionException):
+            if isinstance(e, PermissionDeniedException):
                 raise
-            raise PermissionException(
+            raise PermissionDeniedException(
                 message=f"檢查創建權限時發生錯誤: {str(e)}",
                 error_code="PERMISSION_CHECK_ERROR"
             )

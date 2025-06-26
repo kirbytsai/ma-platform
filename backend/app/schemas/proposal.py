@@ -31,7 +31,7 @@ class CompanyInfoCreate(BaseModel):
     established_year: int = Field(..., ge=1900, le=2030, description="成立年份")
     headquarters: str = Field(..., min_length=2, max_length=50, description="總部地點")
     employee_count: int = Field(..., ge=1, le=100000, description="員工數量")
-    website: Optional[str] = Field(None, regex=r'^https?://.+', description="公司網站")
+    website: Optional[str] = Field(None, pattern=r'^https?://.+', description="公司網站")
     registration_number: Optional[str] = Field(None, max_length=20, description="統一編號")
     
     @validator('established_year')
@@ -251,7 +251,7 @@ class ProposalUpdate(BaseModel):
     teaser_content: Optional[TeaserContentCreate] = None
     full_content: Optional[FullContentCreate] = None
     
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def validate_at_least_one_field(cls, values):
         if not any(values.values()):
             raise ValueError('至少需要更新一個欄位')
@@ -405,7 +405,7 @@ class ProposalSearchParams(BaseModel):
     
     # 排序參數
     sort_by: Optional[str] = Field("created_at", description="排序欄位")
-    sort_order: Optional[str] = Field("desc", regex="^(asc|desc)$", description="排序方向")
+    sort_order: Optional[str] = Field("desc", pattern="^(asc|desc)$", description="排序方向")
     
     # 分頁參數
     page: int = Field(1, ge=1, description="頁碼")

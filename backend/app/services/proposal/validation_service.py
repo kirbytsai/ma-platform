@@ -10,7 +10,7 @@ from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorCollection, AsyncIOMotorDatabase
 
 from app.core.database import Database
-from app.core.exceptions import ValidationException, PermissionException, BusinessException
+from app.core.exceptions import ValidationException, PermissionDeniedException, BusinessException
 from app.models.proposal import Proposal, ProposalStatus, Industry, CompanySize
 from app.models.user import UserRole
 from app.schemas.proposal import ProposalCreate, ProposalUpdate
@@ -49,7 +49,7 @@ class ProposalValidationService:
             user_id: 用戶 ID
             
         Raises:
-            PermissionException: 權限不足
+            PermissionDeniedException: 權限不足
             ValidationException: 用戶不存在
         """
         try:
@@ -65,20 +65,20 @@ class ProposalValidationService:
             # 檢查用戶角色
             user_role = user.get("role")
             if user_role not in [UserRole.SELLER, UserRole.ADMIN]:
-                raise PermissionException(
+                raise PermissionDeniedException(
                     message="只有提案方和管理員可以創建提案",
                     error_code="PROPOSAL_CREATE_NO_PERMISSION"
                 )
             
             # 檢查用戶狀態
             if not user.get("is_active", True):
-                raise PermissionException(
+                raise PermissionDeniedException(
                     message="用戶帳號已被禁用",
                     error_code="USER_ACCOUNT_DISABLED"
                 )
                 
         except Exception as e:
-            if isinstance(e, (PermissionException, ValidationException)):
+            if isinstance(e, (PermissionDeniedException, ValidationException)):
                 raise
             raise ValidationException(
                 message=f"檢查創建權限時發生錯誤: {str(e)}",
@@ -170,28 +170,28 @@ class ProposalValidationService:
             user_id: 用戶 ID
             
         Raises:
-            PermissionException: 非管理員
+            PermissionDeniedException: 非管理員
         """
         try:
             user_collection = await self._get_user_collection()
             user = await user_collection.find_one({"_id": ObjectId(user_id)})
             
             if not user or user.get("role") != UserRole.ADMIN:
-                raise PermissionException(
+                raise PermissionDeniedException(
                     message="需要管理員權限",
                     error_code="ADMIN_PERMISSION_REQUIRED"
                 )
             
             if not user.get("is_active", True):
-                raise PermissionException(
+                raise PermissionDeniedException(
                     message="管理員帳號已被禁用",
                     error_code="ADMIN_ACCOUNT_DISABLED"
                 )
                 
         except Exception as e:
-            if isinstance(e, PermissionException):
+            if isinstance(e, PermissionDeniedException):
                 raise
-            raise PermissionException(
+            raise PermissionDeniedException(
                 message=f"檢查管理員權限時發生錯誤: {str(e)}",
                 error_code="ADMIN_PERMISSION_CHECK_ERROR"
             )

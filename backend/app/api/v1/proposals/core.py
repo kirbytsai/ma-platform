@@ -8,7 +8,7 @@ from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
 from fastapi.responses import JSONResponse
 
-from app.core.exceptions import BusinessException, ValidationException, PermissionException
+from app.core.exceptions import BusinessException, ValidationException, PermissionDeniedException
 from app.models.user import UserRole
 from app.models.proposal import ProposalStatus
 from app.schemas.proposal import ProposalCreate, ProposalUpdate
@@ -60,7 +60,7 @@ async def create_proposal(
             }
         )
         
-    except (PermissionException, ValidationException) as e:
+    except (PermissionDeniedException, ValidationException) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except BusinessException as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -180,7 +180,7 @@ async def update_proposal(
             }
         )
         
-    except (PermissionException, ValidationException) as e:
+    except (PermissionDeniedException, ValidationException) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except BusinessException as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -222,7 +222,7 @@ async def delete_proposal(
             }
         )
         
-    except (PermissionException, ValidationException) as e:
+    except (PermissionDeniedException, ValidationException) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except BusinessException as e:
         raise HTTPException(status_code=422, detail=str(e))

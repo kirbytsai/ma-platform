@@ -9,7 +9,7 @@ from typing import Optional, Dict, Any, List
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorCollection
 
-from app.core.exceptions import BusinessException, PermissionException, ValidationException
+from app.core.exceptions import BusinessException, PermissionDeniedException, ValidationException
 from app.models.proposal import Proposal, ProposalStatus, ReviewRecord
 from app.schemas.proposal import ProposalSubmitRequest
 
@@ -49,7 +49,7 @@ class ProposalWorkflowService:
             
         Raises:
             BusinessException: 提案狀態不允許提交
-            PermissionException: 無提交權限
+            PermissionDeniedException: 無提交權限
         """
         try:
             # 取得提案並檢查權限
@@ -102,7 +102,7 @@ class ProposalWorkflowService:
             return success
             
         except Exception as e:
-            if isinstance(e, (BusinessException, PermissionException, ValidationException)):
+            if isinstance(e, (BusinessException, PermissionDeniedException, ValidationException)):
                 raise
             raise BusinessException(
                 message=f"提交提案時發生錯誤: {str(e)}",
@@ -164,7 +164,7 @@ class ProposalWorkflowService:
             return success
             
         except Exception as e:
-            if isinstance(e, (BusinessException, PermissionException)):
+            if isinstance(e, (BusinessException, PermissionDeniedException)):
                 raise
             raise BusinessException(
                 message=f"撤回提案時發生錯誤: {str(e)}",
@@ -231,7 +231,7 @@ class ProposalWorkflowService:
             return success
             
         except Exception as e:
-            if isinstance(e, (BusinessException, PermissionException)):
+            if isinstance(e, (BusinessException, PermissionDeniedException)):
                 raise
             raise BusinessException(
                 message=f"發布提案時發生錯誤: {str(e)}",
@@ -272,8 +272,8 @@ class ProposalWorkflowService:
                 try:
                     await self.validation.check_admin_permission(user_id)
                     is_admin = True
-                except PermissionException:
-                    raise PermissionException(
+                except PermissionDeniedException:
+                    raise PermissionDeniedException(
                         message="只有創建者或管理員可以歸檔提案",
                         error_code="PROPOSAL_ARCHIVE_NO_PERMISSION"
                     )
@@ -302,7 +302,7 @@ class ProposalWorkflowService:
             return success
             
         except Exception as e:
-            if isinstance(e, (BusinessException, PermissionException)):
+            if isinstance(e, (BusinessException, PermissionDeniedException)):
                 raise
             raise BusinessException(
                 message=f"歸檔提案時發生錯誤: {str(e)}",

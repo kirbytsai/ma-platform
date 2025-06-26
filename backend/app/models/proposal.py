@@ -259,7 +259,7 @@ class Proposal(TimestampMixin):
         # 這裡可以添加狀態轉換邏輯驗證
         return v
     
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def validate_content_completeness(cls, values):
         """根據狀態驗證內容完整性"""
         status = values.get('status')
