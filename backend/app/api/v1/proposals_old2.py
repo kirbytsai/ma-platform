@@ -9,7 +9,7 @@ from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, Body, status, UploadFile, File
 from fastapi.responses import JSONResponse
 
-from app.core.exceptions import BusinessException, ValidationException, PermissionException
+from app.core.exceptions import BusinessException, ValidationException, PermissionDeniedException
 from app.models.user import UserRole
 from app.models.proposal import ProposalStatus, Industry, CompanySize
 from app.schemas.proposal import (

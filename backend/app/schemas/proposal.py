@@ -23,10 +23,13 @@ class ProposalBase(BaseModel):
         json_encoders = {ObjectId: str}
 
 
+# 在 backend/app/schemas/proposal.py 中找到 CompanyInfoCreate 類別，並修改如下：
+
 class CompanyInfoCreate(BaseModel):
     """公司資訊創建/更新"""
     company_name: str = Field(..., min_length=2, max_length=100, description="公司名稱")
     industry: Industry = Field(..., description="行業分類")
+    company_size: Optional[CompanySize] = Field(None, description="公司規模")  # 添加這行
     sub_industry: Optional[str] = Field(None, max_length=50, description="細分行業")
     established_year: int = Field(..., ge=1900, le=2030, description="成立年份")
     headquarters: str = Field(..., min_length=2, max_length=50, description="總部地點")
@@ -41,12 +44,33 @@ class CompanyInfoCreate(BaseModel):
             raise ValueError('成立年份不能超過當前年份')
         return v
     
+    @validator('company_size', always=True)
+    def set_company_size(cls, v, values):
+        """根據員工數量自動設定公司規模"""
+        if v is not None:
+            return v  # 如果已提供，直接使用
+            
+        if 'employee_count' in values:
+            count = values['employee_count']
+            if count <= 4:
+                return CompanySize.MICRO
+            elif count <= 29:
+                return CompanySize.SMALL
+            elif count <= 199:
+                return CompanySize.MEDIUM
+            elif count <= 999:
+                return CompanySize.LARGE
+            else:
+                return CompanySize.ENTERPRISE
+        return CompanySize.SMALL  # 預設值
+    
     class Config:
         use_enum_values = True
         schema_extra = {
             "example": {
                 "company_name": "創新科技有限公司",
                 "industry": "科技軟體",
+                "company_size": "小型企業",  # 添加到示例中
                 "sub_industry": "人工智慧",
                 "established_year": 2018,
                 "headquarters": "台北市",
@@ -56,11 +80,13 @@ class CompanyInfoCreate(BaseModel):
             }
         }
 
+# 在 backend/app/schemas/proposal.py 中找到 FinancialInfoCreate 類別，並修改如下：
 
 class FinancialInfoCreate(BaseModel):
     """財務資訊創建/更新"""
     annual_revenue: int = Field(..., ge=0, le=10000000000, description="年營收 (台幣)")
     net_profit: int = Field(..., ge=-1000000000, le=1000000000, description="淨利潤 (台幣)")
+    profit_margin: Optional[float] = Field(None, ge=0, le=100, description="利潤率 (%) - 可自動計算")  # 添加這行
     growth_rate: float = Field(..., ge=-100, le=1000, description="年成長率 (%)")
     debt_ratio: float = Field(..., ge=0, le=100, description="負債比率 (%)")
     cash_flow: str = Field(..., description="現金流狀況")
@@ -77,18 +103,33 @@ class FinancialInfoCreate(BaseModel):
             raise ValueError(f'現金流狀況必須是以下之一: {", ".join(allowed_values)}')
         return v
     
+    @validator('profit_margin', always=True)
+    def calculate_profit_margin(cls, v, values):
+        """如果沒有提供 profit_margin，自動計算"""
+        if v is not None:
+            return v  # 如果已提供，直接使用
+            
+        if 'annual_revenue' in values and 'net_profit' in values:
+            revenue = values['annual_revenue']
+            profit = values['net_profit']
+            if revenue > 0:
+                calculated_margin = (profit / revenue) * 100
+                return round(calculated_margin, 2)
+        
+        return 0.0  # 預設值
+    
     class Config:
         schema_extra = {
             "example": {
                 "annual_revenue": 50000000,
                 "net_profit": 8000000,
+                "profit_margin": 16.0,  # 添加到示例中
                 "growth_rate": 35.0,
                 "debt_ratio": 25.0,
                 "cash_flow": "正向",
                 "asking_price": 200000000
             }
         }
-
 
 class BusinessModelCreate(BaseModel):
     """商業模式創建/更新"""
